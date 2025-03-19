@@ -1,0 +1,21 @@
+@model int //number of stars
+@if(Model == 3) 
+{ 
+<p>⭐⭐⭐</p> 
+}
+else if(Model == 2) 
+{
+<p>⭐⭐❌</p>
+}
+else if(Model == 1) 
+{
+<p>⭐❌❌</p> 
+}
+else if(Model == 0) 
+{
+<p>❌❌❌</p>
+}
+else
+{
+<p>@Model Stars</p>
+}
