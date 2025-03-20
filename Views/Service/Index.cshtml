@@ -1,35 +1,50 @@
 @model IEnumerable<ActionKids.Models.Service>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Services";
 }
 
-<h1>Index</h1>
+<div class="container">
+<div class="row">
+	<div class="col-sm-6">
+		<h1>All Services</h1>
+		<p> This Is a list of Action Kids services, with the newest on top.</p>
+		<p> Services in red are currently active</p>
+		<form asp-action="Create" method="post">
+		    <button type="submit" class="btn btn-primary">Start New Service</button>
+		</form>
+		<br/>
+	</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ServiceStart)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ServiceStart)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+	<div class="list-group d-flex col-sm-6">
+	@foreach (var item in Model) {
+		@if(item.ServiceStop is null)
+		{
+			<a 	asp-action="Details" 
+				asp-route-id="@item.Id"
+				class="list-group-item list-group-item-action active">
+				<div class="d-flex w-100 justify-content-between">
+				      <h5 class="mb-1">@item.ServiceStart.ToString("MM/dd/yyyy")</h5>
+						<small>Active Service</small>
+				      <small>@item.ServiceRecords.Count() kids</small>
+				</div>
+				<p class="mb-1">@item.ServiceStart.ToString("HH:mm")</p>
+			
+		</a>
+		}
+		else
+		{
+			<a 	asp-action="Details" 
+				asp-route-id="@item.Id"
+				class="list-group-item list-group-item-action">
+				<div class="d-flex w-100 justify-content-between">
+				      <h5 class="mb-1">@item.ServiceStart.ToString("MM/dd/yyy")</h5>
+				      <small>@item.ServiceRecords.Count() kids</small>
+				    </div>
+				<p class="mb-1">@item.ServiceStart.ToString("HH:mm")</p>
+		</a>
+		}
+	}
+	</div>
+</div>
+</div>

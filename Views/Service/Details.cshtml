@@ -3,55 +3,88 @@
 @using Htmx.TagHelpers
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Service";
 }
 
-<script>
-@Html.Raw(HtmxSnippets.AntiforgeryJavaScript)
-</script>
-
-<h1>Details</h1>
 
 <div>
-    <h4>Service</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ServiceStart)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ServiceStart)
-        </dd>
-    </dl>
+	<h1>Action Kids Service</h1>
+	<h4>@Model.ServiceStart.ToString("MM/dd/yyyy")</h4><h5>@Model.ServiceStart.ToString("HH:mm")</h5>
+	@if(@Model.ServiceStop is not null)
+	{
+	DateTime stop = (DateTime) @Model.ServiceStop;
+	@if(@stop.Date != DateTime.Now.Date)
+	{
+	<h6> Stopped On a Different Day( @stop.ToString("MM/dd/yyyy")) at @stop.ToString("HH:mm")</h6>
+	}
+	else
+	{
+	<h6>Stopped at @stop.ToString("HH:mm")</h6>
+	}
+	}
+	else
+	{
+    <form asp-action="Stop" method="post" asp-route-id="@Model.Id">
+        <button type="submit" class="btn btn-primary"
+    	>Stop Service</button>
+    </form>
+	}
+	<a asp-action="Index">Back to List</a>
 </div>
+
+<div>
+    <hr />
+</div>
+
 <div>
 	@foreach(var rec in Model.ServiceRecords)
 	{
     <dl class="row">
-        <dt class = "col-sm-6">
+        <dt class = "col-sm-3">
             @rec.Kid.FirstName @rec.Kid.LastName
         </dt>
         <dd class = "col-sm-3"
-			id="@rec.KidId"
+			id="stars-@rec.KidId"
 			hx-confirm="Remove a star from @rec.Kid.FirstName"
 			hx-trigger="click"
 			hx-disabled-elt="this"
 			hx-target="this"
 			hx-post
 			hx-controller="Service"
-			hx-action="TakeStar"
+	hx-action="TakeStar"
 			hx-route-kidId="@rec.KidId"
 			hx-route-serviceId="@rec.ServiceId"
 		>
 			<partial name="_RenderStars" model="@rec.Stars" />
         </dd>
-        <dd class = "col-sm-3">
+        <dd class = "col-sm-2"
+			id="points-@rec.KidId"
+			hx-disabled-elt="this"
+			hx-target="this"
+			hx-post
+			hx-controller="Service"
+			hx-action="AddPoints"
+			hx-route-kidId="@rec.KidId"
+			hx-route-serviceId="@rec.ServiceId"
+			hx-route-points="1"
+			
+		>
             💰 @rec.PointsEarned
         </dd>
+        <dd class = "col-sm-1"
+			id="reset-@rec.KidId"
+			hx-confirm="reset Points for @rec.Kid.FirstName ?"
+			hx-swap="none"
+			hx-swap-oob="none:points-@rec.KidId"
+			hx-post
+			hx-controller="Service"
+			hx-action="ResetPoints"
+			hx-route-kidId="@rec.KidId"
+			hx-route-serviceId="@rec.ServiceId"
+			
+		>
+		↩️
+		</dd>
     </dl>
 	}
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div> 

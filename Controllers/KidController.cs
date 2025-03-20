@@ -29,6 +29,8 @@ namespace ActionKids.Controllers
             }
 
             var kid = await _context.Kids
+				.Include(k => k.ServiceRecords)
+					.ThenInclude(sr => sr.Service)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (kid == null)
             {

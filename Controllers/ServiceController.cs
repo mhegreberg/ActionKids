@@ -16,7 +16,11 @@ namespace ActionKids.Controllers
         // GET: Service
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Services.ToListAsync());
+            var services = await _context.Services
+                        .Include(s => s.ServiceRecords)
+                    	.OrderByDescending(m => m.ServiceStart)
+                    	.ToListAsync();
+            return View(services);
         }
 
         // GET: Service/Details/5
@@ -43,7 +47,7 @@ namespace ActionKids.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TakeStar(int kidId, int serviceId)
         {
-			Console.WriteLine("TAKING STAR");
+            Console.WriteLine("TAKING STAR");
             var ksr = await _context.KidServiceRecords
                 .FirstOrDefaultAsync(m => m.KidId == kidId && m.ServiceId == serviceId);
 
@@ -62,42 +66,99 @@ namespace ActionKids.Controllers
 
             return PartialView("_RenderStars", ksr.Stars);
         }
-        // GET: Service/Create
-        public IActionResult Create()
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddPoints(int kidId, int serviceId, int points)
         {
-            return View();
+            var ksr = await _context.KidServiceRecords
+                .FirstOrDefaultAsync(m => m.KidId == kidId && m.ServiceId == serviceId);
+
+            if (ksr is null)
+            {
+                return NotFound();
+            }
+
+            ksr.PointsEarned += points;
+            _context.Update(ksr);
+            await _context.SaveChangesAsync();
+
+            return Content("💰 " + ksr.PointsEarned.ToString(), "text/html");
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPoints(int kidId, int serviceId)
+        {
+            var ksr = await _context.KidServiceRecords
+                .FirstOrDefaultAsync(m => m.KidId == kidId && m.ServiceId == serviceId);
+
+            if (ksr is null)
+            {
+                return NotFound();
+            }
+
+            ksr.PointsEarned = 0;
+            _context.Update(ksr);
+            await _context.SaveChangesAsync();
+
+            return Content("💰 " + ksr.PointsEarned.ToString(), "text/html");
         }
 
         // POST: Service/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ServiceStart")] Service service)
+        public async Task<IActionResult> Create()
         {
-            if (ModelState.IsValid)
+            Service service = new()
             {
-                _context.Add(service);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ServiceStart = DateTime.Now
+            };
+            _context.Add(service);
+            await _context.SaveChangesAsync();
+
+            var kids = await _context.Kids.ToListAsync();
+            foreach (var kid in kids)
+            {
+                KidServiceRecord ksr = new()
+                {
+                    ServiceId = service.Id,
+                    KidId = kid.Id
+                };
+                _context.Add(ksr);
             }
-            return View(service);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Details", new { Id = service.Id });
         }
-
-        // GET: Service/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        // POST: Service/Stop/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Stop(int Id)
         {
-            if (id == null)
+            Console.WriteLine("Stopping SERVICE");
+
+            var service = await _context.Services
+                .Include(s => s.ServiceRecords)
+                    .ThenInclude(s => s.Kid)
+                .FirstOrDefaultAsync(s => s.Id == Id);
+            if (service is null)
             {
                 return NotFound();
+            }
+            service.ServiceStop = DateTime.Now;
+            _context.Update(service);
+            foreach (var sr in service.ServiceRecords)
+            {
+                var kid = sr.Kid;
+                kid.Points += sr.PointsEarned;
+                if (sr.Stars < 3)
+                {
+                    kid.TotalLostStars += (3 - sr.Stars);
+                }
+                _context.Update(kid);
             }
 
-            var service = await _context.Services.FindAsync(id);
-            if (service == null)
-            {
-                return NotFound();
-            }
-            return View(service);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Details", new { Id = service.Id });
         }
 
         // POST: Service/Edit/5

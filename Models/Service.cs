@@ -9,7 +9,7 @@ public class Service
 {
     public int Id { get; set; }
     public DateTime ServiceStart { get; set; }
-
+    public DateTime? ServiceStop { get; set; }
     public ICollection<KidServiceRecord> ServiceRecords { get; set; } = new List<KidServiceRecord>();
 
 }
